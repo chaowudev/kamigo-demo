@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :keyword_mappings
   get '/kamigo/send_request', to: 'kamigo#send_request'
   post '/kamigo/webhook', to: 'kamigo#webhook'
 
