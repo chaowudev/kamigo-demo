@@ -3,26 +3,43 @@ class KamigoController < ApplicationController
   require 'line/bot'
 
   protect_from_forgery with: :null_session
-  before_action :client, only: :webhook
 
   def webhook
-    reply_token = params['events'][0]['replyToken']
-    message = {
-      type: 'text',
-      text: 'OK~ OK~'
-    }
-
-    # ActionDispatch::Response
-    puts "===old: #{response.class}==="
-    # reply_message = client.reply_message(reply_token, message)
-    # puts "===reply message: #{reply_message}==="
-    response = client.reply_message(reply_token, message)
-    # Net::HTTPOK, 改寫 Rails response 內容，這是由 reply_message 寫好的 HTTP POST method
-    puts "===new: #{response.class}==="
+    reply_text = keyword_reply(received_text)
+    reponse = reply_to_line(reply_text)
 
     head :ok
   end
 
+  def received_text
+    message = params['events'][0]['message']['text']
+
+    message unless message.nil?
+  end
+
+  def keyword_reply(received_text)
+    keyword_mappings = {
+      'QQ': '不哭～不哭～',
+      '好難過': '別難過QQ'
+    }
+
+    keyword_mappings[received_text.to_sym]
+  end
+
+  def reply_to_line(reply_text)
+    return if reply_text.nil?
+    # byebug
+
+    reply_token = params['events'][0]['replyToken']
+    message = {
+      type: 'text',
+      text: reply_text
+    }
+
+    client.reply_message(reply_token, message)
+  end
+
+  # LINE Bot API initialize
   def client
     @client ||= Line::Bot::Client.new do |config|
       config.channel_id = ENV['LINE_CHANNEL_ID']
