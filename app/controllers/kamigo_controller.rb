@@ -8,9 +8,41 @@ class KamigoController < ApplicationController
     # 學說話指令要優先於關鍵字回覆指令
     reply_text = learn(received_text)
     reply_text = keyword_reply(received_text) if reply_text.nil?
-    reponse = reply_to_line(reply_text)
+    reply_text = echo2(channel_id, received_text) if reply_text.nil?
+
+    save_received_text(channel_id, received_text)
+    reply_to_line(reply_text)
 
     head :ok
+  end
+
+  def echo2(channel_id, received_text)
+    recent_received_texts = Received.where(channel_id: channel_id, text: received_text).last(5)&.pluck(:text)
+    last_replied_text = Reply.where(channel_id: channel_id).last&.text
+
+    return unless received_text.in? recent_received_texts
+    return if received_text == last_replied_text
+
+    save_reply_text(channel_id, received_text)
+    received_text
+  end
+
+  def channel_id
+    source = params['events'][0]['source']
+
+    source['groupId'] || source['userId']
+  end
+
+  def save_received_text(channel_id, received_text)
+    return if received_text.nil?
+
+    Received.create(channel_id: channel_id, text: received_text)
+  end
+
+  def save_reply_text(channel_id, received_text)
+    return if received_text.nil?
+
+    Reply.create(channel_id: channel_id, text: received_text)
   end
 
   def learn(received_text)
@@ -42,7 +74,6 @@ class KamigoController < ApplicationController
 
   def reply_to_line(reply_text)
     return if reply_text.nil?
-    # byebug
 
     reply_token = params['events'][0]['replyToken']
     message = {
@@ -50,7 +81,7 @@ class KamigoController < ApplicationController
       text: reply_text
     }
 
-    client.reply_message(reply_token, message)
+    response = client.reply_message(reply_token, message)
   end
 
   # LINE Bot API initialize
