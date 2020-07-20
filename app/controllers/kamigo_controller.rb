@@ -6,8 +6,8 @@ class KamigoController < ApplicationController
 
   def webhook
     # 學說話指令要優先於關鍵字回覆指令
-    reply_text = learn(received_text)
-    reply_text = keyword_reply(received_text) if reply_text.nil?
+    reply_text = learn(channel_id, received_text)
+    reply_text = keyword_reply(channel_id, received_text) if reply_text.nil?
     reply_text = echo2(channel_id, received_text) if reply_text.nil?
 
     save_received_text(channel_id, received_text)
@@ -45,7 +45,7 @@ class KamigoController < ApplicationController
     Reply.create(channel_id: channel_id, text: received_text)
   end
 
-  def learn(received_text)
+  def learn(channel_id, received_text)
     return if received_text.nil?
     return unless received_text[0..6] == '卡米狗學說話;'
 
@@ -57,7 +57,7 @@ class KamigoController < ApplicationController
     keyword = received_text[0..semicolon_index - 1]
     message = received_text[semicolon_index + 1..-1]
 
-    '好喔～好喔～' if KeywordMapping.create(keyword: keyword, message: message)
+    '好喔～好喔～' if KeywordMapping.find_or_create_by(keyword: keyword, message: message, channel_id: channel_id)
   end
 
   def received_text
@@ -66,8 +66,12 @@ class KamigoController < ApplicationController
     message unless message.nil?
   end
 
-  def keyword_reply(received_text)
+  def keyword_reply(channel_id, received_text)
     return if received_text.nil?
+
+    message = KeywordMapping.where(keyword: received_text, channel_id: channel_id).last&.message
+
+    return message if message.present?
 
     KeywordMapping.where(keyword: received_text).last&.message
   end
