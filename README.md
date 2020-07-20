@@ -1,24 +1,21 @@
-# README
+# Kamigo Demo
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## ERD
+### KeywordMapping
+| column name | type |
+|---|---|
+| keyword | string |
+| message | string |
 
-Things you may want to cover:
+### Received
+| column name | type |
+|---|---|
+| channel_id | string |
+| text | string |
 
-* Ruby version
+### Reply
+| column name | type |
+|---|---|
+| channel_id | string |
+| text | string |
 
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
