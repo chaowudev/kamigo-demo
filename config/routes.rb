@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  get '/kamigo/send_request', to: 'kamigo#send_request'
+  post '/kamigo/webhook', to: 'kamigo#webhook'
+
   get '/kamigo/eat', to: 'kamigo#eat'
 
   get '/kamigo/request_headers', to: 'kamigo#request_headers'
