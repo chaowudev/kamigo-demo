@@ -5,10 +5,27 @@ class KamigoController < ApplicationController
   protect_from_forgery with: :null_session
 
   def webhook
-    reply_text = keyword_reply(received_text)
+    # 學說話指令要優先於關鍵字回覆指令
+    reply_text = learn(received_text)
+    reply_text = keyword_reply(received_text) if reply_text.nil?
     reponse = reply_to_line(reply_text)
 
     head :ok
+  end
+
+  def learn(received_text)
+    return if received_text.nil?
+    return unless received_text[0..6] == '卡米狗學說話;'
+
+    received_text = received_text[7..-1]
+    semicolon_index = received_text.index(';')
+
+    return if semicolon_index.nil?
+
+    keyword = received_text[0..semicolon_index - 1]
+    message = received_text[semicolon_index + 1..-1]
+
+    '好喔～好喔～' if KeywordMapping.create(keyword: keyword, message: message)
   end
 
   def received_text
@@ -18,12 +35,9 @@ class KamigoController < ApplicationController
   end
 
   def keyword_reply(received_text)
-    keyword_mappings = {
-      'QQ': '不哭～不哭～',
-      '好難過': '別難過QQ'
-    }
+    return if received_text.nil?
 
-    keyword_mappings[received_text.to_sym]
+    KeywordMapping.where(keyword: received_text).last&.message
   end
 
   def reply_to_line(reply_text)
