@@ -1,9 +1,38 @@
 class KamigoController < ApplicationController
   require 'net/http'
-  # protect_from_forgery with: :null_session
+  require 'line/bot'
+
+  protect_from_forgery with: :null_session
+  before_action :client, only: :webhook
+
+  def webhook
+    reply_token = params['events'][0]['replyToken']
+    message = {
+      type: 'text',
+      text: 'OK~ OK~'
+    }
+
+    # ActionDispatch::Response
+    puts "===old: #{response.class}==="
+    # reply_message = client.reply_message(reply_token, message)
+    # puts "===reply message: #{reply_message}==="
+    response = client.reply_message(reply_token, message)
+    # Net::HTTPOK, 改寫 Rails response 內容，這是由 reply_message 寫好的 HTTP POST method
+    puts "===new: #{response.class}==="
+
+    head :ok
+  end
+
+  def client
+    @client ||= Line::Bot::Client.new do |config|
+      config.channel_id = ENV['LINE_CHANNEL_ID']
+      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
+      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
+    end
+  end
 
   def send_request
-    uri = URI('http://localhost:3001/kamigo/response_body')
+    uri = URI('http://localhost:3000/kamigo/response_body')
     http = Net::HTTP.new(uri.host, uri.port)
     http_request = Net::HTTP::Get.new(uri)
     http_response = http.request(http_request)
@@ -14,22 +43,6 @@ class KamigoController < ApplicationController
       http_request_class: http_request.class,
       http_response_class: http_response.class
     )
-    # response = Net::HTTP.get(uri)
-    # render plain: translate_to_japanese(response)
-  end
-
-  # @POST request: LINE verify
-  def webhook
-    render plain: params
-    head :ok
-  end
-
-  def translate_to_japanese(message)
-    "#{message}です。"
-  end
-
-  def eat
-    render plain: '吃土拉'
   end
 
   def request_headers
