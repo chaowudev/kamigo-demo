@@ -6,6 +6,8 @@ class KamigoController < ApplicationController
 
   def webhook
     # 學說話指令要優先於關鍵字回覆指令
+    find_or_create_user
+
     reply_text = learn(channel_id, received_text)
     reply_text = keyword_reply(channel_id, received_text) if reply_text.nil?
     reply_text = echo2(channel_id, received_text) if reply_text.nil?
@@ -14,6 +16,10 @@ class KamigoController < ApplicationController
     reply_to_line(reply_text)
 
     head :ok
+  end
+
+  def find_or_create_user
+    User.find_by(channel_id: channel_id) || User.create(channel_id: channel_id, email: Faker::Internet.email, password: Faker::Internet.password)
   end
 
   def echo2(channel_id, received_text)
