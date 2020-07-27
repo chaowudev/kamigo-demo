@@ -94,15 +94,6 @@ class KamigoController < ApplicationController
     response = client.reply_message(reply_token, message)
   end
 
-  # LINE Bot API initialize
-  def client
-    @client ||= Line::Bot::Client.new do |config|
-      config.channel_id = ENV['LINE_CHANNEL_ID']
-      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
-      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
-    end
-  end
-
   def send_request
     uri = URI('http://localhost:3000/kamigo/response_body')
     http = Net::HTTP.new(uri.host, uri.port)

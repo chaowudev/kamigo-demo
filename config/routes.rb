@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   devise_for :users
   resources :keyword_mappings
+
+  resources :push_messages, only: [:new, :create]
+
   get '/kamigo/send_request', to: 'kamigo#send_request'
   post '/kamigo/webhook', to: 'kamigo#webhook'
 
