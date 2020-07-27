@@ -5,9 +5,10 @@ class KamigoController < ApplicationController
   protect_from_forgery with: :null_session
 
   def webhook
-    # 學說話指令要優先於關鍵字回覆指令
+    verify_request_source
     find_or_create_user
-
+    
+    # 學說話指令要優先於關鍵字回覆指令
     reply_text = learn(channel_id, received_text)
     reply_text = keyword_reply(channel_id, received_text) if reply_text.nil?
     reply_text = echo2(channel_id, received_text) if reply_text.nil?
@@ -16,6 +17,17 @@ class KamigoController < ApplicationController
     reply_to_line(reply_text)
 
     head :ok
+  end
+
+  def verify_request_source
+    body = request.body.read
+    signature = request.env['HTTP_X_LINE_SIGNATURE']
+
+    unless client.validate_signature(body, signature)
+      render plain: 'Bad Request', status: 400
+
+      return
+    end
   end
 
   def find_or_create_user
